@@ -4,21 +4,39 @@ set -e
 
 echo "🚀 Installing claude-notify..."
 
-CONFIG_DIR="$HOME/.claude"
-CONFIG_FILE="$CONFIG_DIR/settings.json"
-BACKUP_FILE="$CONFIG_DIR/settings.json.bak"
+INSTALL_DIR="$HOME/.claude-notify"
+CLAUDE_DIR="$HOME/.claude"
+CONFIG_FILE="$CLAUDE_DIR/settings.json"
+BACKUP_FILE="$CLAUDE_DIR/settings.json.bak"
 
-mkdir -p "$CONFIG_DIR"
+mkdir -p "$INSTALL_DIR"
+
+echo "📦 Copying runtime files..."
+
+rm -rf "$INSTALL_DIR/hooks"
+rm -rf "$INSTALL_DIR/lib"
+
+cp -R hooks "$INSTALL_DIR/"
+cp -R lib "$INSTALL_DIR/"
+
+if [ -f VERSION ]; then
+    cp VERSION "$INSTALL_DIR/"
+fi
+
+mkdir -p "$CLAUDE_DIR"
 
 if [ -f "$CONFIG_FILE" ]; then
     cp "$CONFIG_FILE" "$BACKUP_FILE"
-    echo "✓ Backup created: $BACKUP_FILE"
+    echo "✓ Backed up settings.json"
 else
     echo "{}" > "$CONFIG_FILE"
 fi
 
-echo "✓ Claude config found"
+echo ""
+echo "⚙️ Configuring Claude..."
+
+bash lib/settings.sh
 
 echo ""
-echo "Next step:"
-echo "We'll automatically configure Claude hooks in the next version."
+echo "✅ claude-notify installed successfully!"
+echo "📁 Installed to: $INSTALL_DIR"
