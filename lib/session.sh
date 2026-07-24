@@ -1,32 +1,32 @@
 #!/bin/bash
 
+set -e
+
 ACTION="$1"
 
-DATA_DIR="$HOME/.claude-notify/sessions"
+DATA_DIR="$HOME/.claude-notify/data/sessions"
 mkdir -p "$DATA_DIR"
 
 SESSION_ID=$(jq -r '.session_id')
-FILE="$DATA_DIR/$SESSION_ID.json"
+SESSION_FILE="$DATA_DIR/$SESSION_ID.json"
 
 case "$ACTION" in
-  start)
-    jq '. + {start_time: now|floor}' > "$FILE"
+
+start)
+
+    jq \
+      --arg start "$(date +%s)" \
+      '. + {start_time:$start}' \
+      > "$SESSION_FILE"
+
     ;;
 
-  stop)
-    [ ! -f "$FILE" ] && exit 0
+stop)
 
-    START=$(jq -r '.start_time' "$FILE")
-    END=$(date +%s)
-    DURATION=$((END - START))
+    [ ! -f "$SESSION_FILE" ] && exit 0
 
-    PROJECT=$(basename "$(jq -r '.cwd' "$FILE")")
-    PROMPT=$(jq -r '.prompt // ""' "$FILE")
+    cat "$SESSION_FILE"
 
-    osascript <<EOF
-display notification "$PROMPT\nDuration: ${DURATION}s" with title "✅ $PROJECT"
-EOF
-
-    rm -f "$FILE"
     ;;
+
 esac

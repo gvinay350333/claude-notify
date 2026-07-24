@@ -10,14 +10,18 @@ CONFIG_FILE="$CLAUDE_DIR/settings.json"
 BACKUP_FILE="$CLAUDE_DIR/settings.json.bak"
 
 mkdir -p "$INSTALL_DIR"
+mkdir -p "$INSTALL_DIR/data/sessions"
+mkdir -p "$INSTALL_DIR/data/logs"
 
 echo "📦 Copying runtime files..."
 
 rm -rf "$INSTALL_DIR/hooks"
 rm -rf "$INSTALL_DIR/lib"
+rm -rf "$INSTALL_DIR/commands"
 
 cp -R hooks "$INSTALL_DIR/"
 cp -R lib "$INSTALL_DIR/"
+cp -R commands "$INSTALL_DIR/"
 
 if [ -f VERSION ]; then
     cp VERSION "$INSTALL_DIR/"

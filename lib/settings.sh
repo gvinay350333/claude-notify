@@ -8,23 +8,24 @@ HOOK_COMMAND="$HOME/.claude-notify/hooks/entrypoint.sh"
 TMP_FILE=$(mktemp)
 
 jq --arg cmd "$HOOK_COMMAND" '
-# Ensure hooks and Stop exist
+
+# Ensure hooks object exists
 .hooks = (.hooks // {}) |
+
+############################
+# STOP HOOK
+############################
+
 .hooks.Stop = (.hooks.Stop // []) |
 
-# Remove any old claude-notify hook regardless of path
 .hooks.Stop |= map(
   .hooks |= map(
-    select(
-      (.command | test("claude-notify\\.sh$")) | not
-    )
+    select((.command | test("claude-notify|entrypoint")) | not)
   )
 ) |
 
-# Remove empty hook groups
 .hooks.Stop |= map(select(.hooks | length > 0)) |
 
-# Add our hook
 .hooks.Stop += [
   {
     "hooks": [
@@ -35,9 +36,35 @@ jq --arg cmd "$HOOK_COMMAND" '
       }
     ]
   }
+] |
+
+############################
+# USER PROMPT SUBMIT HOOK
+############################
+
+.hooks.UserPromptSubmit = (.hooks.UserPromptSubmit // []) |
+
+.hooks.UserPromptSubmit |= map(
+  .hooks |= map(
+    select((.command | test("claude-start|claude-notify|entrypoint")) | not)
+  )
+) |
+
+.hooks.UserPromptSubmit |= map(select(.hooks | length > 0)) |
+
+.hooks.UserPromptSubmit += [
+  {
+    "hooks": [
+      {
+        "type": "command",
+        "command": $cmd
+      }
+    ]
+  }
 ]
+
 ' "$CONFIG_FILE" > "$TMP_FILE"
 
 mv "$TMP_FILE" "$CONFIG_FILE"
 
-echo "✓ Claude Stop hook configured"
+echo "✓ Claude hooks configured"
