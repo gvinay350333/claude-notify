@@ -15,6 +15,7 @@ case "$EVENT" in
     "$ROOT_DIR/commands/stop.sh"
     ;;
   Notification)
+    echo "Notification Hook Fired $(date)" >> ~/.claude-notify/data/logs/notification.log
     "$ROOT_DIR/commands/notify.sh"
     ;;
 esac
