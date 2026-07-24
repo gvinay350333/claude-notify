@@ -37,6 +37,23 @@ else
 fi
 
 echo ""
+echo "🔔 Checking notification helper..."
+
+if command -v terminal-notifier >/dev/null 2>&1; then
+    echo "✓ terminal-notifier found (notifications are clickable)"
+elif command -v brew >/dev/null 2>&1; then
+    printf "  terminal-notifier not found. Install it for click-to-focus notifications? [y/N] "
+    read -r reply
+    case "$reply" in
+        [Yy]*) brew install terminal-notifier ;;
+        *) echo "  Skipped. Notifications will work but won't be clickable." ;;
+    esac
+else
+    echo "  ⚠ terminal-notifier and Homebrew not found."
+    echo "    Notifications will work but won't be clickable. Install terminal-notifier for click-to-focus."
+fi
+
+echo ""
 echo "⚙️ Configuring Claude..."
 
 bash lib/settings.sh
