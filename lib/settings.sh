@@ -3,7 +3,7 @@
 set -e
 
 CONFIG_FILE="$HOME/.claude/settings.json"
-HOOK_COMMAND="$HOME/.claude-notify/hooks/claude-notify.sh"
+HOOK_COMMAND="$HOME/.claude-notify/hooks/entrypoint.sh"
 
 TMP_FILE=$(mktemp)
 
