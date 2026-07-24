@@ -20,6 +20,7 @@ cat > "$SESSION_FILE" <<EOF
 {
   "session_id":"$SESSION_ID",
   "project":"${CLAUDE_PROJECT_DIR}",
+  "term":"${TERM_PROGRAM}",
   "start_time":$(date +%s)
 }
 EOF
