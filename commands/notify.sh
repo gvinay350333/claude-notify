@@ -47,4 +47,5 @@ bash "$SCRIPT_DIR/../lib/notification.sh" \
   "$MESSAGE" \
   "$TERMINAL_APP" \
   "$TERMINAL_TTY" \
-  "$SUBTITLE"
+  "$SUBTITLE" \
+  "true"

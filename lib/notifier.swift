@@ -238,6 +238,7 @@ func main() {
     let app = args.count >= 4 ? args[3] : ""
     let tty = args.count >= 5 ? args[4] : ""
     let lastPrompt = args.count >= 6 ? args[5] : ""
+    let showAllow = args.count >= 7 ? args[6] == "true" : false
     
     let notification = NSUserNotification()
     notification.title = title
@@ -248,9 +249,14 @@ func main() {
     notification.informativeText = message
     notification.soundName = NSUserNotificationDefaultSoundName
     
-    notification.hasActionButton = true
-    notification.actionButtonTitle = "Allow"
-    notification.otherButtonTitle = "Show"
+    if showAllow {
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Allow"
+        notification.otherButtonTitle = "Show"
+    } else {
+        notification.hasActionButton = false
+        notification.otherButtonTitle = "Show"
+    }
     
     let delegate = NotificationDelegate(app: app, tty: tty)
     NSUserNotificationCenter.default.delegate = delegate
