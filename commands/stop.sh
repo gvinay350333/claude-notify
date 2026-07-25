@@ -12,6 +12,15 @@ PROJECT=$(basename "$(echo "$SESSION_JSON" | jq -r '.project')")
 NOW=$(date +%s)
 DURATION=$((NOW-START))
 
+TERMINAL_APP=""
+TERMINAL_TTY=""
+if [ -n "$SESSION_JSON" ]; then
+  TERMINAL_APP=$(echo "$SESSION_JSON" | jq -r '.terminal_app // empty')
+  TERMINAL_TTY=$(echo "$SESSION_JSON" | jq -r '.tty // empty')
+fi
+
 bash "$SCRIPT_DIR/../lib/notification.sh" \
 "Claude Notify" \
-"$PROJECT finished in ${DURATION}s"
+"$PROJECT finished in ${DURATION}s" \
+"$TERMINAL_APP" \
+"$TERMINAL_TTY"

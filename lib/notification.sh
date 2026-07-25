@@ -2,14 +2,17 @@
 
 TITLE="${1:-Claude Notify}"
 MESSAGE="${2:-Task completed}"
+TERMINAL_APP="${3:-}"
+TERMINAL_TTY="${4:-}"
 
-# macOS only — osascript is the notification transport. No-op elsewhere.
-command -v osascript >/dev/null 2>&1 || exit 0
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Args go through argv (not string interpolation) so the title/message
-# cannot break or inject into the AppleScript.
-osascript - "$TITLE" "$MESSAGE" <<'APPLESCRIPT'
-on run argv
-  display notification (item 2 of argv) with title (item 1 of argv)
-end run
-APPLESCRIPT
+# Compile the Swift notifier if binary does not exist or was modified
+if [ ! -f "$SCRIPT_DIR/notifier" ] || [ "$SCRIPT_DIR/notifier.swift" -nt "$SCRIPT_DIR/notifier" ]; then
+  swiftc "$SCRIPT_DIR/notifier.swift" -o "$SCRIPT_DIR/notifier" >/dev/null 2>&1
+fi
+
+# Execute the native compiled notifier binary in the background
+if [ -f "$SCRIPT_DIR/notifier" ]; then
+  "$SCRIPT_DIR/notifier" "$TITLE" "$MESSAGE" "$TERMINAL_APP" "$TERMINAL_TTY" >/dev/null 2>&1 &
+fi

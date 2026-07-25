@@ -2,6 +2,9 @@
 
 set -e
 
+# Ensure homebrew and local paths are included so that jq is found in background environments
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 

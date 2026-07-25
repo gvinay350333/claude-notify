@@ -61,6 +61,32 @@ jq --arg cmd "$HOOK_COMMAND" '
       }
     ]
   }
+] |
+
+############################
+# NOTIFICATION HOOK
+############################
+
+.hooks.Notification = (.hooks.Notification // []) |
+
+.hooks.Notification |= map(
+  .hooks |= map(
+    select((.command | test("claude-notify|entrypoint")) | not)
+  )
+) |
+
+.hooks.Notification |= map(select(.hooks | length > 0)) |
+
+.hooks.Notification += [
+  {
+    "hooks": [
+      {
+        "type": "command",
+        "command": $cmd,
+        "async": true
+      }
+    ]
+  }
 ]
 
 ' "$CONFIG_FILE" > "$TMP_FILE"
