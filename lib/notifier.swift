@@ -256,8 +256,9 @@ func main() {
     NSUserNotificationCenter.default.delegate = delegate
     NSUserNotificationCenter.default.deliver(notification)
     
-    // Auto-dismiss script process after 45 seconds
-    DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
+    // Auto-dismiss and remove notification after 4 seconds
+    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+        NSUserNotificationCenter.default.removeDeliveredNotification(notification)
         exit(0)
     }
     
