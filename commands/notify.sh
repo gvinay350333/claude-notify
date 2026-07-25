@@ -1,7 +1,6 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 SESSION_JSON=$(bash "$SCRIPT_DIR/../lib/session.sh" read)
 
 STATUS_MSG="${1:-}"
@@ -9,17 +8,21 @@ STATUS_MSG="${1:-}"
 PROJECT=""
 LAST_PROMPT=""
 if [ -n "$SESSION_JSON" ]; then
-  PROJECT=$(basename "$(echo "$SESSION_JSON" | jq -r '.project')")
+  PROJECT=$(echo "$SESSION_JSON" | jq -r '.project // empty')
   LAST_PROMPT=$(echo "$SESSION_JSON" | jq -r '.last_prompt // empty')
 fi
 
-# Format Title and Message context
+# Format Title and Subtitle context
 TITLE="Claude Code"
-[ -n "$PROJECT" ] && TITLE="$PROJECT"
+SUBTITLE=""
+[ -n "$PROJECT" ] && SUBTITLE="📁 $PROJECT"
 
-MESSAGE="Claude needs your attention"
+MESSAGE="Needs attention"
 if [ -n "$STATUS_MSG" ]; then
   MESSAGE="Needs attention: $STATUS_MSG"
+fi
+if [ -n "$LAST_PROMPT" ]; then
+  MESSAGE="$MESSAGE • $LAST_PROMPT"
 fi
 
 TERMINAL_APP=""
@@ -34,4 +37,4 @@ bash "$SCRIPT_DIR/../lib/notification.sh" \
   "$MESSAGE" \
   "$TERMINAL_APP" \
   "$TERMINAL_TTY" \
-  "$LAST_PROMPT"
+  "$SUBTITLE"
