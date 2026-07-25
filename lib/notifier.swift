@@ -203,22 +203,20 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-        if notification.activationType == .actionButtonClicked {
-            // User clicked the main action button (e.g. "Allow" for attention, or "Show" for completed)
-            if otherButtonRedirects {
+        if notification.activationType == .additionalActionClicked {
+            if notification.additionalActivationAction?.identifier == "allow" {
                 sendApproval(app: terminalApp, tty: terminalTty)
-            } else {
+            } else if notification.additionalActivationAction?.identifier == "show" {
                 focusTerminal(app: terminalApp, tty: terminalTty)
             }
+        } else if notification.activationType == .actionButtonClicked {
+            // User clicked the main "Show" button for completed notifications
+            focusTerminal(app: terminalApp, tty: terminalTty)
         }
         exit(0)
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didDismissAlert notification: NSUserNotification) {
-        // Called when user clicks the other button ("Show" for attention, or "Close" for completed)
-        if otherButtonRedirects {
-            focusTerminal(app: terminalApp, tty: terminalTty)
-        }
         exit(0)
     }
     
@@ -255,14 +253,20 @@ func main() {
     
     if showAllow {
         notification.hasActionButton = true
-        notification.actionButtonTitle = "Allow"
-        notification.otherButtonTitle = "Show"
+        notification.actionButtonTitle = "Options"
+        notification.otherButtonTitle = "Close"
+        
+        let allowAction = NSUserNotificationAction(identifier: "allow", title: "Allow")
+        let showAction = NSUserNotificationAction(identifier: "show", title: "Show")
+        notification.additionalActions = [allowAction, showAction]
     } else {
-        notification.hasActionButton = false
-        notification.otherButtonTitle = "Show"
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Show"
+        notification.otherButtonTitle = "Close"
+        notification.additionalActions = []
     }
     
-    let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: true)
+    let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: showAllow)
     NSUserNotificationCenter.default.delegate = delegate
     NSUserNotificationCenter.default.deliver(notification)
     
