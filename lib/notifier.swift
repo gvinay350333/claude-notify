@@ -213,6 +213,8 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
             } else if notification.additionalActivationAction?.identifier == "show" {
                 focusTerminal(app: terminalApp, tty: terminalTty)
             }
+        } else if notification.activationType == .actionButtonClicked {
+            focusTerminal(app: terminalApp, tty: terminalTty)
         } else if notification.activationType == .contentsClicked {
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
@@ -262,9 +264,7 @@ func main() {
         notification.hasActionButton = true
         notification.actionButtonTitle = "Show"
         notification.otherButtonTitle = "Close"
-        
-        let showAction = NSUserNotificationAction(identifier: "show", title: "Show")
-        notification.additionalActions = [showAction]
+        notification.additionalActions = []
     }
     
     let delegate = NotificationDelegate(app: app, tty: tty)
