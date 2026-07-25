@@ -23,6 +23,9 @@ cp -R hooks "$INSTALL_DIR/"
 cp -R lib "$INSTALL_DIR/"
 cp -R commands "$INSTALL_DIR/"
 
+echo "🔨 Compiling Swift helper..."
+swiftc "$INSTALL_DIR/lib/notifier.swift" -o "$INSTALL_DIR/lib/notifier" >/dev/null 2>&1
+
 if [ -f VERSION ]; then
     cp VERSION "$INSTALL_DIR/"
 fi
