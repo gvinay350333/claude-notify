@@ -15,7 +15,7 @@ fi
 
 # Format Title and Message context
 TITLE="Claude Code"
-[ -n "$PROJECT" ] && TITLE="$PROJECT - Claude Code"
+[ -n "$PROJECT" ] && TITLE="$PROJECT"
 
 MESSAGE="Claude needs your attention"
 if [ -n "$STATUS_MSG" ]; then

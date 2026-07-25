@@ -15,7 +15,7 @@ DURATION=$((NOW-START))
 
 # Format Title and Message context
 TITLE="Claude Code"
-[ -n "$PROJECT" ] && TITLE="$PROJECT - Claude Code"
+[ -n "$PROJECT" ] && TITLE="$PROJECT"
 
 MESSAGE="Completed in ${DURATION}s"
 
