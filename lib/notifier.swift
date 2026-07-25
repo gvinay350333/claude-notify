@@ -260,12 +260,11 @@ func main() {
         notification.actionButtonTitle = "Allow"
         notification.otherButtonTitle = "Show"
     } else {
-        notification.hasActionButton = true
-        notification.actionButtonTitle = "Show"
-        notification.otherButtonTitle = "Close"
+        notification.hasActionButton = false
+        notification.otherButtonTitle = "Show"
     }
     
-    let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: showAllow)
+    let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: true)
     NSUserNotificationCenter.default.delegate = delegate
     NSUserNotificationCenter.default.deliver(notification)
     
