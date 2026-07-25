@@ -8,9 +8,16 @@ SESSION_JSON=$(bash "$SCRIPT_DIR/../lib/session.sh" stop)
 
 START=$(echo "$SESSION_JSON" | jq -r '.start_time')
 PROJECT=$(basename "$(echo "$SESSION_JSON" | jq -r '.project')")
+LAST_PROMPT=$(echo "$SESSION_JSON" | jq -r '.last_prompt // empty')
 
 NOW=$(date +%s)
 DURATION=$((NOW-START))
+
+# Format Title and Message context
+TITLE="Claude Code"
+[ -n "$PROJECT" ] && TITLE="$PROJECT - Claude Code"
+
+MESSAGE="Completed in ${DURATION}s"
 
 TERMINAL_APP=""
 TERMINAL_TTY=""
@@ -20,7 +27,8 @@ if [ -n "$SESSION_JSON" ]; then
 fi
 
 bash "$SCRIPT_DIR/../lib/notification.sh" \
-"Claude Notify" \
-"$PROJECT finished in ${DURATION}s" \
-"$TERMINAL_APP" \
-"$TERMINAL_TTY"
+  "$TITLE" \
+  "$MESSAGE" \
+  "$TERMINAL_APP" \
+  "$TERMINAL_TTY" \
+  "$LAST_PROMPT"
