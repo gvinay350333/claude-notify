@@ -1,7 +1,6 @@
 import Foundation
 import Cocoa
 import ObjectiveC
-import UserNotifications
 
 // Dynamic Swizzling to override main bundle identifier
 // This allows the binary to masquerade as Terminal so macOS displays the notification center banner natively
@@ -192,26 +191,42 @@ func sendApproval(app: String, tty: String) {
     appleScript?.executeAndReturnError(&error)
 }
 
-class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     let terminalApp: String
     let terminalTty: String
+    let otherButtonRedirects: Bool
     
-    init(app: String, tty: String) {
+    init(app: String, tty: String, otherButtonRedirects: Bool) {
         self.terminalApp = app
         self.terminalTty = tty
+        self.otherButtonRedirects = otherButtonRedirects
     }
     
-    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        if response.actionIdentifier == "allow" {
-            sendApproval(app: terminalApp, tty: terminalTty)
-        } else if response.actionIdentifier == "show" {
-            focusTerminal(app: terminalApp, tty: terminalTty)
-        } else if response.actionIdentifier == UNNotificationDefaultActionIdentifier {
-            // Clicked notification body
+    func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
+        if notification.activationType == .actionButtonClicked {
+            if otherButtonRedirects {
+                // User clicked "Allow"
+                sendApproval(app: terminalApp, tty: terminalTty)
+            } else {
+                // User clicked "Show" (directly outside dropdown for completed tasks)
+                focusTerminal(app: terminalApp, tty: terminalTty)
+            }
+        } else if notification.activationType == .contentsClicked {
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
-        completionHandler()
         exit(0)
+    }
+    
+    func userNotificationCenter(_ center: NSUserNotificationCenter, didDismissAlert notification: NSUserNotification) {
+        // Called when user clicks "Show" (which triggers didDismissAlert for the other button on attention prompts)
+        if otherButtonRedirects {
+            focusTerminal(app: terminalApp, tty: terminalTty)
+        }
+        exit(0)
+    }
+    
+    func userNotificationCenter(_ center: NSUserNotificationCenter, shouldPresent notification: NSUserNotification) -> Bool {
+        return true // Ensure it displays even if we are focused
     }
 }
 
@@ -232,52 +247,32 @@ func main() {
     let lastPrompt = args.count >= 6 ? args[5] : ""
     let showAllow = args.count >= 7 ? args[6] == "true" : false
     
-    let center = UNUserNotificationCenter.current()
-    let delegate = NotificationDelegate(app: app, tty: tty)
-    center.delegate = delegate
+    let notification = NSUserNotification()
+    notification.title = title
     
-    center.requestAuthorization(options: [.alert, .sound]) { granted, error in
-        // Configure actions
-        var actions: [UNNotificationAction] = []
-        if showAllow {
-            let allowAction = UNNotificationAction(identifier: "allow", title: "Allow", options: [.foreground])
-            let showAction = UNNotificationAction(identifier: "show", title: "Show", options: [.foreground])
-            actions = [allowAction, showAction]
-        } else {
-            let showAction = UNNotificationAction(identifier: "show", title: "Show", options: [.foreground])
-            actions = [showAction]
-        }
-        
-        let category = UNNotificationCategory(
-            identifier: "claude-notify-category",
-            actions: actions,
-            intentIdentifiers: [],
-            options: []
-        )
-        center.setNotificationCategories([category])
-        
-        // Configure content
-        let content = UNMutableNotificationContent()
-        content.title = title
-        if !lastPrompt.isEmpty {
-            content.subtitle = lastPrompt
-        }
-        content.body = message
-        content.sound = UNNotificationSound.default
-        content.categoryIdentifier = "claude-notify-category"
-        
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        center.add(request) { error in
-            if let error = error {
-                print("Error delivering notification: \(error)")
-                exit(1)
-            }
-        }
+    if !lastPrompt.isEmpty {
+        notification.subtitle = lastPrompt
     }
+    notification.informativeText = message
+    notification.soundName = NSUserNotificationDefaultSoundName
+    
+    if showAllow {
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Allow"
+        notification.otherButtonTitle = "Show"
+    } else {
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Show"
+        notification.otherButtonTitle = "" // Leave empty to prevent Option dropdown grouping
+    }
+    
+    let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: showAllow)
+    NSUserNotificationCenter.default.delegate = delegate
+    NSUserNotificationCenter.default.deliver(notification)
     
     // Auto-dismiss and remove notification after 60 seconds
     DispatchQueue.main.asyncAfter(deadline: .now() + 60.0) {
-        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        NSUserNotificationCenter.default.removeDeliveredNotification(notification)
         exit(0)
     }
     
