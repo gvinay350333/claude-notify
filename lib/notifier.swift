@@ -164,7 +164,7 @@ func sendApproval(app: String, tty: String) {
                         repeat with w in windows
                             repeat with t in tabs of w
                                 if tty of t is targetTty then
-                                    do script "y" in t
+                                    do script "" in t
                                     exit repeat
                                 end if
                             end repeat
@@ -179,7 +179,7 @@ func sendApproval(app: String, tty: String) {
                             repeat with t in tabs of w
                                 repeat with s in sessions of t
                                     if tty of s is targetTty then
-                                        tell s to write text "y"
+                                        tell s to write text ""
                                         exit repeat
                                     end if
                                 end repeat
