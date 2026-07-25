@@ -13,16 +13,15 @@ if [ -n "$SESSION_JSON" ]; then
 fi
 
 # Format Title and Subtitle context
-TITLE=""
+TITLE="Claude Code"
+[ -n "$PROJECT" ] && TITLE="📁 $PROJECT"
+
 SUBTITLE=""
-[ -n "$PROJECT" ] && SUBTITLE="📁 $PROJECT"
+[ -n "$LAST_PROMPT" ] && SUBTITLE="$LAST_PROMPT"
 
 MESSAGE="Needs attention"
 if [ -n "$STATUS_MSG" ]; then
   MESSAGE="Needs attention: $STATUS_MSG"
-fi
-if [ -n "$LAST_PROMPT" ]; then
-  MESSAGE="$MESSAGE • $LAST_PROMPT"
 fi
 
 TERMINAL_APP=""

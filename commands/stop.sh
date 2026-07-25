@@ -14,14 +14,13 @@ NOW=$(date +%s)
 DURATION=$((NOW-START))
 
 # Format Title and Subtitle context
-TITLE=""
+TITLE="Task Completed"
+[ -n "$PROJECT" ] && TITLE="📁 $PROJECT"
+
 SUBTITLE=""
-[ -n "$PROJECT" ] && SUBTITLE="📁 $PROJECT"
+[ -n "$LAST_PROMPT" ] && SUBTITLE="$LAST_PROMPT"
 
 MESSAGE="Completed in ${DURATION}s"
-if [ -n "$LAST_PROMPT" ]; then
-  MESSAGE="$MESSAGE • $LAST_PROMPT"
-fi
 
 TERMINAL_APP=""
 TERMINAL_TTY=""
