@@ -207,12 +207,13 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-        // Check how it was activated
-        if notification.activationType == .actionButtonClicked {
-            // User clicked the Action button ("Allow")
-            sendApproval(app: terminalApp, tty: terminalTty)
-        } else {
-            // User clicked the main banner body or "Show" button
+        if notification.activationType == .additionalActionClicked {
+            if notification.additionalActivationAction?.identifier == "allow" {
+                sendApproval(app: terminalApp, tty: terminalTty)
+            } else if notification.additionalActivationAction?.identifier == "show" {
+                focusTerminal(app: terminalApp, tty: terminalTty)
+            }
+        } else if notification.activationType == .contentsClicked {
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
         exit(0)
@@ -251,11 +252,19 @@ func main() {
     
     if showAllow {
         notification.hasActionButton = true
-        notification.actionButtonTitle = "Allow"
-        notification.otherButtonTitle = "Show"
+        notification.actionButtonTitle = "Options"
+        notification.otherButtonTitle = "Close"
+        
+        let allowAction = NSUserNotificationAction(identifier: "allow", title: "Allow")
+        let showAction = NSUserNotificationAction(identifier: "show", title: "Show")
+        notification.additionalActions = [allowAction, showAction]
     } else {
-        notification.hasActionButton = false
-        notification.otherButtonTitle = "Show"
+        notification.hasActionButton = true
+        notification.actionButtonTitle = "Show"
+        notification.otherButtonTitle = "Close"
+        
+        let showAction = NSUserNotificationAction(identifier: "show", title: "Show")
+        notification.additionalActions = [showAction]
     }
     
     let delegate = NotificationDelegate(app: app, tty: tty)
