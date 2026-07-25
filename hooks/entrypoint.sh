@@ -8,17 +8,21 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-EVENT=$(jq -r '.hook_event_name')
+PAYLOAD=$(cat -)
+
+EVENT=$(echo "$PAYLOAD" | jq -r '.hook_event_name')
 
 case "$EVENT" in
   UserPromptSubmit)
-    "$ROOT_DIR/commands/start.sh"
+    PROMPT_TEXT=$(echo "$PAYLOAD" | jq -r '.prompt // empty')
+    "$ROOT_DIR/commands/start.sh" "$PROMPT_TEXT"
     ;;
   Stop)
     "$ROOT_DIR/commands/stop.sh"
     ;;
   Notification)
-    echo "Notification Hook Fired $(date)" >> ~/.claude-notify/data/logs/notification.log
-    "$ROOT_DIR/commands/notify.sh"
+    STATUS_MSG=$(echo "$PAYLOAD" | jq -r '.statusMessage // .message // empty')
+    echo "Notification Hook Fired $(date) status=[$STATUS_MSG]" >> ~/.claude-notify/data/logs/notification.log
+    "$ROOT_DIR/commands/notify.sh" "$STATUS_MSG"
     ;;
 esac

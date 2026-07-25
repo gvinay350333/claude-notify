@@ -44,6 +44,11 @@ case "$FRONTMOST" in
     ;;
 esac
 
+# Ensure homebrew is in PATH so jq is found
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+PROMPT_TEXT="${2:-}"
+
 SESSION_TTY=""
 # Try standard tty command
 SESSION_TTY=$(tty 2>/dev/null || echo "")
@@ -63,15 +68,16 @@ if [ -z "$SESSION_TTY" ] || [ "$SESSION_TTY" = "not a tty" ]; then
   done
 fi
 
-cat > "$SESSION_FILE" <<EOF
-{
-  "session_id":"$SESSION_ID",
-  "project":"${CLAUDE_PROJECT_DIR}",
-  "start_time":$(date +%s),
-  "terminal_app":"$TERM_APP",
-  "tty":"$SESSION_TTY"
-}
-EOF
+# Construct JSON safely using jq
+jq -n \
+  --arg id "$SESSION_ID" \
+  --arg proj "${CLAUDE_PROJECT_DIR}" \
+  --arg time "$(date +%s)" \
+  --arg app "$TERM_APP" \
+  --arg tty "$SESSION_TTY" \
+  --arg prompt "$PROMPT_TEXT" \
+  '{session_id: $id, project: $proj, start_time: ($time | tonumber), terminal_app: $app, tty: $tty, last_prompt: $prompt}' \
+  > "$SESSION_FILE"
 ;;
 
 read)

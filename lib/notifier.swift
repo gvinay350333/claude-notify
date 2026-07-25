@@ -22,7 +22,7 @@ extension Bundle {
     }
 }
 
-// Helper to focus terminal app
+// Helper to focus terminal app window and tab
 func focusTerminal(app: String, tty: String) {
     let appName = app == "iTerm2" ? "iTerm" : app
     var script = ""
@@ -123,6 +123,80 @@ func focusTerminal(app: String, tty: String) {
     appleScript?.executeAndReturnError(&error)
 }
 
+// Helper to write "y" + Enter to the specific terminal tab matching TTY
+func sendApproval(app: String, tty: String) {
+    let appName = app == "iTerm2" ? "iTerm" : app
+    var script = ""
+    
+    if appName.isEmpty || appName == "Electron" {
+        script += """
+        set targetApp to ""
+        tell application "System Events"
+            if exists process "iTerm2" then
+                set targetApp to "iTerm2"
+            else if exists process "Terminal" then
+                set targetApp to "Terminal"
+            else if exists process "WezTerm" then
+                set targetApp to "WezTerm"
+            else if exists process "Ghostty" then
+                set targetApp to "Ghostty"
+            else if exists process "Alacritty" then
+                set targetApp to "Alacritty"
+            end if
+        end tell
+        """
+    } else {
+        script += "set targetApp to \"\(app)\"\n"
+    }
+    
+    script += """
+    if targetApp is not "" then
+        set appName to targetApp
+        if appName is "iTerm2" then
+            set appName to "iTerm"
+        end if
+        
+        set targetTty to "\(tty)"
+        if targetTty is not "" then
+            if targetApp is "Terminal" then
+                try
+                    tell application "Terminal"
+                        repeat with w in windows
+                            repeat with t in tabs of w
+                                if tty of t is targetTty then
+                                    do script "y" in t
+                                    exit repeat
+                                end if
+                            end repeat
+                        end repeat
+                    end tell
+                end try
+            else if targetApp is "iTerm" or targetApp is "iTerm2" then
+                try
+                    set itermApp to "iTerm"
+                    tell application itermApp
+                        repeat with w in windows
+                            repeat with t in tabs of w
+                                repeat with s in sessions of t
+                                    if tty of s is targetTty then
+                                        tell s to write text "y"
+                                        exit repeat
+                                    end if
+                                end repeat
+                            end repeat
+                        end repeat
+                    end tell
+                end try
+            end if
+        end if
+    end if
+    """
+    
+    let appleScript = NSAppleScript(source: script)
+    var error: NSDictionary?
+    appleScript?.executeAndReturnError(&error)
+}
+
 class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     let terminalApp: String
     let terminalTty: String
@@ -133,8 +207,14 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
-        // Called when user clicks the notification banner or the Show button
-        focusTerminal(app: terminalApp, tty: terminalTty)
+        // Check how it was activated
+        if notification.activationType == .actionButtonClicked {
+            // User clicked the Action button ("Allow")
+            sendApproval(app: terminalApp, tty: terminalTty)
+        } else {
+            // User clicked the main banner body or "Show" button
+            focusTerminal(app: terminalApp, tty: terminalTty)
+        }
         exit(0)
     }
     
@@ -149,7 +229,7 @@ func main() {
     
     let args = CommandLine.arguments
     guard args.count >= 3 else {
-        print("Usage: notifier <title> <message> [terminal_app] [terminal_tty]")
+        print("Usage: notifier <title> <message> [terminal_app] [terminal_tty] [last_prompt]")
         exit(1)
     }
     
@@ -157,22 +237,27 @@ func main() {
     let message = args[2]
     let app = args.count >= 4 ? args[3] : ""
     let tty = args.count >= 5 ? args[4] : ""
+    let lastPrompt = args.count >= 6 ? args[5] : ""
     
     let notification = NSUserNotification()
     notification.title = title
+    
+    if !lastPrompt.isEmpty {
+        notification.subtitle = lastPrompt
+    }
     notification.informativeText = message
     notification.soundName = NSUserNotificationDefaultSoundName
     
     notification.hasActionButton = true
-    notification.actionButtonTitle = "Show"
-    notification.otherButtonTitle = "Close"
+    notification.actionButtonTitle = "Allow"
+    notification.otherButtonTitle = "Show"
     
     let delegate = NotificationDelegate(app: app, tty: tty)
     NSUserNotificationCenter.default.delegate = delegate
     NSUserNotificationCenter.default.deliver(notification)
     
-    // Auto-dismiss script process after 30 seconds
-    DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+    // Auto-dismiss script process after 45 seconds
+    DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
         exit(0)
     }
     

@@ -4,6 +4,7 @@ TITLE="${1:-Claude Notify}"
 MESSAGE="${2:-Task completed}"
 TERMINAL_APP="${3:-}"
 TERMINAL_TTY="${4:-}"
+LAST_PROMPT="${5:-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -14,5 +15,5 @@ fi
 
 # Execute the native compiled notifier binary in the background
 if [ -f "$SCRIPT_DIR/notifier" ]; then
-  "$SCRIPT_DIR/notifier" "$TITLE" "$MESSAGE" "$TERMINAL_APP" "$TERMINAL_TTY" >/dev/null 2>&1 &
+  "$SCRIPT_DIR/notifier" "$TITLE" "$MESSAGE" "$TERMINAL_APP" "$TERMINAL_TTY" "$LAST_PROMPT" >/dev/null 2>&1 &
 fi
