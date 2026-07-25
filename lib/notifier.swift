@@ -261,7 +261,7 @@ func main() {
     } else {
         notification.hasActionButton = true
         notification.actionButtonTitle = "Show"
-        notification.otherButtonTitle = "" // Leave empty to prevent Option dropdown grouping
+        notification.otherButtonTitle = "Close"
     }
     
     let delegate = NotificationDelegate(app: app, tty: tty, otherButtonRedirects: showAllow)
