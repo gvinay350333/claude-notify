@@ -210,8 +210,6 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
             } else {
                 focusTerminal(app: terminalApp, tty: terminalTty)
             }
-        } else if notification.activationType == .contentsClicked {
-            focusTerminal(app: terminalApp, tty: terminalTty)
         }
         exit(0)
     }
