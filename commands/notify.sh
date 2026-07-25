@@ -1,6 +1,16 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Wait for session file to be created (resolves race condition with async start hook)
+SESSION_FILE="$HOME/.claude-notify/data/sessions/${CLAUDE_CODE_SESSION_ID:-}.json"
+for i in {1..10}; do
+  if [ -f "$SESSION_FILE" ] && [ -s "$SESSION_FILE" ]; then
+    break
+  fi
+  sleep 0.1
+done
+
 SESSION_JSON=$(bash "$SCRIPT_DIR/../lib/session.sh" read)
 
 STATUS_MSG="${1:-}"
