@@ -93,7 +93,7 @@ stop)
 
 cat "$SESSION_FILE"
 
-rm -f "$SESSION_FILE"
+# Do not delete session file here so it stays active for multiple queries in the same session
 ;;
 
 esac
