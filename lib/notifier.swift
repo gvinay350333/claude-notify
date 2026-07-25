@@ -2,6 +2,29 @@ import Foundation
 import Cocoa
 import ObjectiveC
 
+// Global debug logger to capture runtime logs and AppleScript errors
+func logDebug(_ message: String) {
+    let homeDir = NSHomeDirectory()
+    let logDir = "\(homeDir)/.claude-notify/data/logs"
+    try? FileManager.default.createDirectory(atPath: logDir, withIntermediateDirectories: true, attributes: nil)
+    let logPath = "\(logDir)/debug.log"
+    
+    let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .medium)
+    let logLine = "[\(timestamp)] \(message)\n"
+    if let data = logLine.data(using: .utf8) {
+        if FileManager.default.fileExists(atPath: logPath) {
+            if let fileHandle = try? FileHandle(forWritingTo: URL(fileURLWithPath: logPath)) {
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                fileHandle.closeFile()
+            }
+        } else {
+            try? data.write(to: URL(fileURLWithPath: logPath), options: .atomic)
+        }
+    }
+}
+
+
 // Dynamic Swizzling to override main bundle identifier
 // This allows the binary to masquerade as Terminal so macOS displays the notification center banner natively
 extension Bundle {
@@ -104,19 +127,28 @@ func focusTerminal(app: String, tty: String) {
             end try
         end if
         
+        set targetProcess to targetApp
+        if targetProcess is "iTerm" then
+            set targetProcess to "iTerm2"
+        end if
         tell application "System Events"
-            if exists process targetApp then
+            if exists process targetProcess then
                 try
-                    set frontmost of process targetApp to true
+                    set frontmost of process targetProcess to true
                 end try
             end if
         end tell
     end if
     """
     
+    logDebug("Executing focusTerminal AppleScript for App: \(app), TTY: \(tty)")
     let appleScript = NSAppleScript(source: script)
     var error: NSDictionary?
-    appleScript?.executeAndReturnError(&error)
+    if appleScript?.executeAndReturnError(&error) == nil {
+        if let error = error {
+            logDebug("focusTerminal AppleScript Error: \(error)")
+        }
+    }
 }
 
 // Helper to write return key to the specific terminal tab matching TTY
@@ -185,10 +217,14 @@ func sendApproval(app: String, tty: String) {
         end if
     end if
     """
-    
+    logDebug("Executing sendApproval AppleScript for App: \(app), TTY: \(tty)")
     let appleScript = NSAppleScript(source: script)
     var error: NSDictionary?
-    appleScript?.executeAndReturnError(&error)
+    if appleScript?.executeAndReturnError(&error) == nil {
+        if let error = error {
+            logDebug("sendApproval AppleScript Error: \(error)")
+        }
+    }
 }
 
 class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
@@ -203,21 +239,29 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didActivate notification: NSUserNotification) {
+        logDebug("didActivate triggered. activationType: \(notification.activationType.rawValue), otherButtonRedirects: \(otherButtonRedirects)")
         if notification.activationType == .actionButtonClicked {
             if otherButtonRedirects {
                 // User clicked "Allow"
+                logDebug("Allow action clicked, sending approval.")
                 sendApproval(app: terminalApp, tty: terminalTty)
             } else {
                 // User clicked "Show" (directly outside dropdown for completed tasks)
+                logDebug("Show action clicked, focusing terminal.")
                 focusTerminal(app: terminalApp, tty: terminalTty)
             }
+        } else if notification.activationType == .contentsClicked {
+            logDebug("Banner contents clicked, focusing terminal.")
+            focusTerminal(app: terminalApp, tty: terminalTty)
         }
         exit(0)
     }
     
     func userNotificationCenter(_ center: NSUserNotificationCenter, didDismissAlert notification: NSUserNotification) {
+        logDebug("didDismissAlert triggered. otherButtonRedirects: \(otherButtonRedirects)")
         // Called when user clicks "Show" (which triggers didDismissAlert for the other button on attention prompts)
         if otherButtonRedirects {
+            logDebug("Show other button clicked, focusing terminal.")
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
         exit(0)
