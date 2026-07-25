@@ -252,6 +252,9 @@ func main() {
     notification.actionButtonTitle = "Allow"
     notification.otherButtonTitle = "Show"
     
+    // Force Alert style programmatically (value 2) so it stays on screen until dismissed, bypassing global banner settings
+    notification.setValue(2, forKey: "_presentationStyle")
+    
     let delegate = NotificationDelegate(app: app, tty: tty)
     NSUserNotificationCenter.default.delegate = delegate
     NSUserNotificationCenter.default.deliver(notification)
