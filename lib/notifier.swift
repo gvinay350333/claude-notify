@@ -62,15 +62,13 @@ func focusTerminal(app: String, tty: String) {
                 try
                     tell application "Terminal"
                         repeat with w in windows
-                            repeat with t in tabs of w
-                                if tty of t is targetTty then
-                                    set selected of t to true
-                                    set index of w to 1
-                                    set ttyFound to true
-                                    exit repeat
-                                end if
-                            end repeat
-                            if ttyFound then exit repeat
+                            set tabList to (tabs of w whose tty is targetTty)
+                            if tabList is not {} then
+                                set selected of (first item of tabList) to true
+                                set index of w to 1
+                                set ttyFound to true
+                                exit repeat
+                            end if
                         end repeat
                         activate
                     end tell
@@ -81,15 +79,13 @@ func focusTerminal(app: String, tty: String) {
                     tell application itermApp
                         repeat with w in windows
                             repeat with t in tabs of w
-                                repeat with s in sessions of t
-                                    if tty of s is targetTty then
-                                        select s
-                                        set index of w to 1
-                                        set ttyFound to true
-                                        exit repeat
-                                    end if
-                                end repeat
-                                if ttyFound then exit repeat
+                                set sessionList to (sessions of t whose tty is targetTty)
+                                if sessionList is not {} then
+                                    select (first item of sessionList)
+                                    set index of w to 1
+                                    set ttyFound to true
+                                    exit repeat
+                                end if
                             end repeat
                             if ttyFound then exit repeat
                         end repeat
@@ -162,12 +158,11 @@ func sendApproval(app: String, tty: String) {
                 try
                     tell application "Terminal"
                         repeat with w in windows
-                            repeat with t in tabs of w
-                                if tty of t is targetTty then
-                                    do script "" in t
-                                    exit repeat
-                                end if
-                            end repeat
+                            set tabList to (tabs of w whose tty is targetTty)
+                            if tabList is not {} then
+                                do script "" in (first item of tabList)
+                                exit repeat
+                            end if
                         end repeat
                     end tell
                 end try
@@ -177,12 +172,11 @@ func sendApproval(app: String, tty: String) {
                     tell application itermApp
                         repeat with w in windows
                             repeat with t in tabs of w
-                                repeat with s in sessions of t
-                                    if tty of s is targetTty then
-                                        tell s to write text ""
-                                        exit repeat
-                                    end if
-                                end repeat
+                                set sessionList to (sessions of t whose tty is targetTty)
+                                if sessionList is not {} then
+                                    tell (first item of sessionList) to write text ""
+                                    exit repeat
+                                end if
                             end repeat
                         end repeat
                     end tell
