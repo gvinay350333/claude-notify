@@ -14,7 +14,7 @@ NOW=$(date +%s)
 DURATION=$((NOW-START))
 
 # Format Title and Subtitle context
-TITLE="Task Completed"
+TITLE=""
 SUBTITLE=""
 [ -n "$PROJECT" ] && SUBTITLE="📁 $PROJECT"
 

@@ -13,7 +13,7 @@ if [ -n "$SESSION_JSON" ]; then
 fi
 
 # Format Title and Subtitle context
-TITLE="Claude Code"
+TITLE=""
 SUBTITLE=""
 [ -n "$PROJECT" ] && SUBTITLE="📁 $PROJECT"
 
