@@ -20,9 +20,4 @@ case "$EVENT" in
   Stop)
     "$ROOT_DIR/commands/stop.sh"
     ;;
-  Notification)
-    STATUS_MSG=$(echo "$PAYLOAD" | jq -r '.statusMessage // .message // empty')
-    echo "Notification Hook Fired $(date) status=[$STATUS_MSG]" >> ~/.claude-notify/data/logs/notification.log
-    "$ROOT_DIR/commands/notify.sh" "$STATUS_MSG"
-    ;;
 esac
