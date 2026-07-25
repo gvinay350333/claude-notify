@@ -14,8 +14,9 @@ NOW=$(date +%s)
 DURATION=$((NOW-START))
 
 # Format Title and Subtitle context
+SHORT_PROJECT=$(echo "$PROJECT" | sed "s|^$HOME|~|")
 TITLE="Task Completed"
-[ -n "$PROJECT" ] && TITLE="📁 $PROJECT"
+[ -n "$PROJECT" ] && TITLE="📁 $SHORT_PROJECT"
 
 SUBTITLE=""
 [ -n "$LAST_PROMPT" ] && SUBTITLE="$LAST_PROMPT"

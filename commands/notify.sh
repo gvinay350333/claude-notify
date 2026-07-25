@@ -13,8 +13,9 @@ if [ -n "$SESSION_JSON" ]; then
 fi
 
 # Format Title and Subtitle context
+SHORT_PROJECT=$(echo "$PROJECT" | sed "s|^$HOME|~|")
 TITLE="Claude Code"
-[ -n "$PROJECT" ] && TITLE="📁 $PROJECT"
+[ -n "$PROJECT" ] && TITLE="📁 $SHORT_PROJECT"
 
 SUBTITLE=""
 [ -n "$LAST_PROMPT" ] && SUBTITLE="$LAST_PROMPT"
