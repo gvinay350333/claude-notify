@@ -17,6 +17,17 @@ Desktop notifications for Claude Code. Native macOS alerts with quick actions, i
 
 ---
 
+## Compatibility
+
+- **macOS Versions:** macOS 12 (Monterey), macOS 13 (Ventura), macOS 14 (Sonoma), and macOS 15 (Sequoia).
+- **CPU Architectures:** Both **Apple Silicon** (M1/M2/M3/M4 chips) and **Intel** processors.
+- **Terminal Emulators:**
+  - **macOS Terminal:** Full support (instantly focuses application and active tab).
+  - **iTerm2:** Full support (instantly focuses application and active tab).
+  - *Other terminals (WezTerm, Ghostty, Alacritty, etc.):* Focuses application window on click.
+
+---
+
 ## Installation
 
 Run the installation script in the root of the repository:
