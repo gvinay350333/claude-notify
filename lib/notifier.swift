@@ -254,6 +254,7 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
             logDebug("Banner contents clicked, focusing terminal.")
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
+        center.removeDeliveredNotification(notification)
         exit(0)
     }
     
@@ -264,6 +265,7 @@ class NotificationDelegate: NSObject, NSUserNotificationCenterDelegate {
             logDebug("Show other button clicked, focusing terminal.")
             focusTerminal(app: terminalApp, tty: terminalTty)
         }
+        center.removeDeliveredNotification(notification)
         exit(0)
     }
     
