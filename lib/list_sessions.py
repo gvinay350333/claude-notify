@@ -286,62 +286,18 @@ def load_active_sessions():
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
 
-def play_startup_animation(stdscr):
-    curses.curs_set(0)
-    stdscr.nodelay(True)
-    
-    # High-fidelity realistic eye opening animation
-    frames = [
-        # Frame 1: Eyes Closed
-        [
-            "                                                        ",
-            "                                                        ",
-            "       .-~''\"\"''~-.                  .-~''\"\"''~-.       ",
-            "       '·-.,_ _,,.-·'                '·-.,_ _,,.-·'     ",
-            "                                                        "
-        ],
-        # Frame 2: Eyes Half Open (iris/pupil hidden under eyelid)
-        [
-            "        ,.-~''\"\"''~-.,                ,.-~''\"\"''~-.,    ",
-            "       /  .-~''\"\"''~-.  \\            /  .-~''\"\"''~-.  \\   ",
-            "      |  |  (_____)  |  |          |  |  (_____)  |  |  ",
-            "       \\  '-.______.-'  /           \\  '-.______.-'  /  ",
-            "        '~-.,_  _,,.-~'              '~-.,_  _,,.-~'    "
-        ],
-        # Frame 3: Eyes Fully Open (large clear iris and pupil visible)
-        [
-            "        ,.-~''\"\"''~-.,                ,.-~''\"\"''~-.,    ",
-            "       /  .-~''\"\"''~-.  \\            /  .-~''\"\"''~-.  \\   ",
-            "      |  |    ( @ )    |  |          |  |    ( @ )    |  |  ",
-            "       \\  '-.______.-'  /           \\  '-.______.-'  /  ",
-            "        '~-.,_  _,,.-~'              '~-.,_  _,,.-~'    "
-        ]
+def draw_glasses(stdscr, start_y, width):
+    glasses = [
+        "      .─────────.     .─────────.      ",
+        "     / █████████ \\   / █████████ \\     ",
+        "    | ███████████ |─| ███████████ |    ",
+        "     \\ █████████ /   \\ █████████ /     ",
+        "      '─────────'     '─────────'      "
     ]
-    
-    for frame in frames:
-        stdscr.erase()
-        height, width = stdscr.getmaxyx()
-        
-        # Render frame centered
-        start_y = max(0, (height - len(frame)) // 2 - 1)
-        for i, line in enumerate(frame):
-            start_x = max(0, (width - len(line)) // 2)
-            stdscr.addstr(start_y + i, start_x, line[:width-1], curses.A_BOLD)
-            
-        stdscr.refresh()
-        
-        # Check for keyboard skip
-        try:
-            key = stdscr.getch()
-            if key != -1:
-                break
-        except Exception:
-            pass
-            
-        time.sleep(0.35)
-        
-    stdscr.nodelay(False)
-    time.sleep(0.15)
+    for i, line in enumerate(glasses):
+        start_x = max(0, (width - len(line)) // 2)
+        stdscr.addstr(start_y + i, start_x, line[:width-1], curses.A_BOLD)
+    return len(glasses)
 
 def draw_menu(stdscr):
     curses.curs_set(0)
@@ -351,9 +307,6 @@ def draw_menu(stdscr):
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)
     except Exception:
         pass
-        
-    # Play specs pull down animation once at startup
-    play_startup_animation(stdscr)
         
     selected_idx = 0
     current_action = 0
@@ -373,19 +326,29 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
+        # 1. Draw fully shaded glasses at the top (no animation)
+        glasses_height = draw_glasses(stdscr, 1, width)
+        
+        # Clamp selection if size changed after close
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
         
+        # Header configurations
         col_proj_w = max(12, min(20, width // 5))
         col_tty_w = 8
         col_age_w = 10
         col_action_w = 14
         col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
         
+        # Draw Header row below glasses
+        header_y = glasses_height + 2
         header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
-        stdscr.addstr(0, 0, header[:width-1], curses.A_BOLD)
-        stdscr.addstr(1, 0, ("─" * width)[:width-1])
+        stdscr.addstr(header_y, 0, header[:width-1], curses.A_BOLD)
+        stdscr.addstr(header_y + 1, 0, ("─" * width)[:width-1])
         
-        max_visible = height - 4
+        # List data starting after header separator
+        data_start_y = header_y + 2
+        max_visible = height - data_start_y - 2
+        
         for idx, s in enumerate(sessions[:max_visible]):
             proj_disp = truncate_string(s["project_name"], col_proj_w)
             title_disp = truncate_string(s["title"] if s["title"] else "(new conversation)", col_title_w)
@@ -395,12 +358,13 @@ def draw_menu(stdscr):
             if idx == selected_idx:
                 action_text = "◀ FOCUS ▶".center(col_action_w) if current_action == 0 else "◀ EXIT ▶".center(col_action_w)
                 line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
-                stdscr.addstr(2 + idx, 0, line[:width-1], curses.color_pair(1) | curses.A_BOLD)
+                stdscr.addstr(data_start_y + idx, 0, line[:width-1], curses.color_pair(1) | curses.A_BOLD)
             else:
                 action_text = "  Focus".ljust(col_action_w)
                 line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
-                stdscr.addstr(2 + idx, 0, line[:width-1])
+                stdscr.addstr(data_start_y + idx, 0, line[:width-1])
         
+        # Footer
         footer = "(Navigate: ↑/↓/←/→, Select Action: ←/→, Execute: Enter, Cancel: Ctrl+C)"
         stdscr.addstr(height - 1, 0, footer[:width-1], curses.A_DIM)
         
@@ -408,6 +372,7 @@ def draw_menu(stdscr):
         
         key = stdscr.getch()
         
+        # Handle keypresses
         if key in (curses.KEY_UP, ord('k')):
             selected_idx = (selected_idx - 1) % len(sessions)
             current_action = 0 
