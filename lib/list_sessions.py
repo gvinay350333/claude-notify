@@ -286,21 +286,6 @@ def load_active_sessions():
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
 
-def draw_mascot(stdscr, start_y, width):
-    # Pixel-perfect official Claude Code mascot (Clawd) using quadrant characters
-    mascot = [
-        "  ▗▄▄▄▖  ",
-        " ▗▛   ▜▖ ",
-        " ▗▛ ▗▖▗▖ ▜▖ ",
-        " ▜▘ ▝▘▝▘ ▝▛ ",
-        " ▐  ▗▄▄▖  ▌ ",
-        "  ▜▖   ▗▛  ",
-        "   ▝▀▀▀▘   "
-    ]
-    for i, line in enumerate(mascot):
-        stdscr.addstr(start_y + i, 2, line, curses.A_BOLD)
-    return len(mascot)
-
 def draw_menu(stdscr):
     curses.curs_set(0)
     curses.use_default_colors()
@@ -328,9 +313,6 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw static official Claude Code robot mascot left-aligned at the top
-        mascot_height = draw_mascot(stdscr, 1, width)
-        
         # Clamp selection if size changed after close
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
         
@@ -341,8 +323,11 @@ def draw_menu(stdscr):
         col_action_w = 14
         col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
         
-        # Draw Header row below mascot
-        header_y = mascot_height + 2
+        # Draw minimal, clean, professional title header at the top
+        stdscr.addstr(1, 1, "Active Claude Code Sessions", curses.A_BOLD)
+        
+        # Draw Header row below title (y = 3)
+        header_y = 3
         header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
         stdscr.addstr(header_y, 0, header[:width-1], curses.A_BOLD)
         stdscr.addstr(header_y + 1, 0, ("─" * width)[:width-1])
