@@ -286,23 +286,25 @@ def load_active_sessions():
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
 
-def draw_conversations_mascot(stdscr, start_y, width):
-    # Left-aligned Claude mascot inside active conversation chat bubble
-    bubble = [
-        "    .-------------------.    ",
-        "   /  Active Claude      \\   ",
-        "  |   Conversations       |  ",
-        "  |    .--------.         |  ",
-        "  |  []|  •  •  |[]       |  ",
-        "  |    |  └──┘  |         |  ",
-        "  |    '--------'         |  ",
-        "   \\                     /   ",
-        "    '---------.---------'    ",
-        "             /               "
+def draw_side_header(stdscr, active_count, width):
+    # Left side: Mascot
+    mascot = [
+        "  .--------.  ",
+        "[]|  •  •  |[]",
+        "  |  └──┘  |  ",
+        "  '--------'  "
     ]
-    for i, line in enumerate(bubble):
-        stdscr.addstr(start_y + i, 2, line, curses.A_BOLD)
-    return len(bubble)
+    for i, line in enumerate(mascot):
+        stdscr.addstr(1 + i, 2, line, curses.A_BOLD)
+        
+    # Right side: Title & Session Info Banner
+    title_x = 20
+    if width > title_x + 30:
+        stdscr.addstr(1, title_x, "🤖 CLAUDE CODE CONVERSATIONS", curses.A_BOLD)
+        stdscr.addstr(2, title_x, "────────────────────────────", curses.A_DIM)
+        stdscr.addstr(3, title_x, f"Active Sessions: {active_count}  •  Select action: ◀ FOCUS ▶ / ◀ EXIT ▶", curses.A_DIM)
+        
+    return len(mascot) + 1
 
 def draw_menu(stdscr):
     curses.curs_set(0)
@@ -331,8 +333,8 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw static conversation identity banner at the top
-        mascot_height = draw_conversations_mascot(stdscr, 1, width)
+        # 1. Draw side-by-side header (Left: Mascot, Right: Title/Stats)
+        header_height = draw_side_header(stdscr, len(sessions), width)
         
         # Clamp selection if size changed after close
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
@@ -344,8 +346,8 @@ def draw_menu(stdscr):
         col_action_w = 14
         col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
         
-        # Draw Header row below mascot bubble
-        header_y = mascot_height + 2
+        # Draw Header row below side-by-side header
+        header_y = header_height + 1
         header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
         stdscr.addstr(header_y, 0, header[:width-1], curses.A_BOLD)
         stdscr.addstr(header_y + 1, 0, ("─" * width)[:width-1])
