@@ -238,6 +238,69 @@ def truncate_string(s, length):
         return s.ljust(length)
     return s[:length-3] + "..."
 
+def get_session_preview(session_id, project_path):
+    preview_lines = []
+    
+    pattern = os.path.expanduser(f"~/.claude/projects/*/{session_id}.jsonl")
+    matched_files = glob.glob(pattern)
+    
+    if matched_files:
+        try:
+            with open(matched_files[0], "r", encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    try:
+                        data = json.loads(line)
+                        msg_type = data.get("type")
+                        if msg_type == "assistant":
+                            msg = data.get("message", {})
+                            content = msg.get("content", [])
+                            for c in content:
+                                if isinstance(c, dict) and c.get("type") == "text":
+                                    text = c.get("text", "").strip()
+                                    if text:
+                                        preview_lines = [l for l in text.split("\n") if l.strip()]
+                    except Exception:
+                        continue
+        except Exception:
+            pass
+            
+    if not preview_lines:
+        preview_lines = ["No recent assistant output text found for this session."]
+        
+    return preview_lines[-8:]
+
+def show_preview_modal(stdscr, session):
+    height, width = stdscr.getmaxyx()
+    preview_lines = get_session_preview(session["session_id"], session["project_path"])
+    
+    modal_h = min(len(preview_lines) + 5, height - 4)
+    modal_w = min(85, width - 4)
+    start_y = (height - modal_h) // 2
+    start_x = (width - modal_w) // 2
+    
+    # Draw background box
+    for r in range(modal_h):
+        stdscr.addstr(start_y + r, start_x, " " * modal_w, curses.A_REVERSE)
+        
+    # Title header
+    title = f" 🔍 PREVIEW: {session['project_name']} "
+    stdscr.addstr(start_y + 1, start_x + 2, title[:modal_w - 4], curses.A_BOLD | curses.A_REVERSE)
+    stdscr.addstr(start_y + 2, start_x + 2, "─" * (modal_w - 4), curses.A_REVERSE)
+    
+    # Text lines
+    for idx, line in enumerate(preview_lines[:modal_h - 4]):
+        stdscr.addstr(start_y + 3 + idx, start_x + 2, line[:modal_w - 4], curses.A_REVERSE)
+        
+    # Footer
+    stdscr.addstr(start_y + modal_h - 1, start_x + 2, "(Press Space or Esc to close)", curses.A_DIM | curses.A_REVERSE)
+    stdscr.refresh()
+    
+    # Wait for exit key
+    while True:
+        k = stdscr.getch()
+        if k in (32, 27, 10, 13, ord('q'), ord('Q')):
+            break
+
 def load_active_sessions():
     tags = load_tags()
 
@@ -377,7 +440,7 @@ def draw_side_header(stdscr, active_count, width):
     if width > title_x + 30:
         stdscr.addstr(1, title_x, "🤖 CLAUDE CODE CONVERSATIONS", curses.A_BOLD)
         stdscr.addstr(2, title_x, "────────────────────────────", curses.A_DIM)
-        stdscr.addstr(3, title_x, f"Active Sessions: {active_count}  •  [R] Rename  •  ◀ FOCUS ▶ / ◀ EXIT ▶", curses.A_DIM)
+        stdscr.addstr(3, title_x, f"Active Sessions: {active_count}  •  [Space] Preview  •  [R] Rename", curses.A_DIM)
         
     return len(mascot) + 1
 
@@ -449,7 +512,7 @@ def draw_menu(stdscr):
                 stdscr.addstr(data_start_y + idx, 0, line[:width-1])
         
         # Footer
-        footer = "(Navigate: ↑/↓/←/→, Action: ←/→, Rename: R, Execute: Enter, Cancel: Ctrl+C)"
+        footer = "(Navigate: ↑/↓/←/→, Action: ←/→, Preview: Space, Rename: R, Execute: Enter, Cancel: Ctrl+C)"
         stdscr.addstr(height - 1, 0, footer[:width-1], curses.A_DIM)
         
         stdscr.refresh()
@@ -467,6 +530,9 @@ def draw_menu(stdscr):
             current_action = 0
         elif key in (curses.KEY_RIGHT, ord('l')):
             current_action = 1
+        elif key == ord(' '):
+            selected_session = sessions[selected_idx]
+            show_preview_modal(stdscr, selected_session)
         elif key in (ord('r'), ord('R')):
             selected_session = sessions[selected_idx]
             new_tag = prompt_tag_input(stdscr, selected_session.get("custom_tag"))

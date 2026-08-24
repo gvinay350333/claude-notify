@@ -74,6 +74,7 @@ Open a new terminal tab (or reload config: `source ~/.zshrc`) and run:
 clist
 ```
 - **Navigate**: Use **Up/Down (↑/↓)** arrow keys to select a session.
+- **Quick Preview**: Press **Spacebar** on any session to open an overlay modal showing the last lines of Claude's response/output without switching tabs.
 - **Rename / Tag**: Press **R** on any selected session to give it a custom label (e.g. `auth-bug`, `refactor-db`).
 - **Actions**: Use **Left/Right (←/→)** arrow keys to toggle between actions:
   - `◀ FOCUS ▶`: Instantly focus and switch to the session's active terminal tab (press **Enter**).
