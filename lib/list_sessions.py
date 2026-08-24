@@ -287,14 +287,15 @@ def load_active_sessions():
     return sessions
 
 def draw_mascot(stdscr, start_y, width):
-    # Left-aligned high-fidelity official Claude Code headphones robot mascot
+    # Pixel-perfect official Claude Code mascot (Clawd) using quadrant characters
     mascot = [
-        "   .--------.   ",
-        " []|  •  •  |[] ",
-        "   |  └──┘  |   ",
-        "   '--------'   ",
-        "    /      \\    ",
-        "   /________\\   "
+        "  ▗▄▄▄▖  ",
+        " ▗▛   ▜▖ ",
+        " ▗▛ ▗▖▗▖ ▜▖ ",
+        " ▜▘ ▝▘▝▘ ▝▛ ",
+        " ▐  ▗▄▄▖  ▌ ",
+        "  ▜▖   ▗▛  ",
+        "   ▝▀▀▀▘   "
     ]
     for i, line in enumerate(mascot):
         stdscr.addstr(start_y + i, 2, line, curses.A_BOLD)
