@@ -287,7 +287,7 @@ def load_active_sessions():
     return sessions
 
 def draw_mascot(stdscr, start_y, width):
-    # Standard character retro mascot (immune to terminal font line-height issues)
+    # Left-aligned retro mascot with clean padding
     mascot = [
         "   |/|   |\\|   ",
         "  .---------.  ",
@@ -297,8 +297,7 @@ def draw_mascot(stdscr, start_y, width):
         "   /       \\   "
     ]
     for i, line in enumerate(mascot):
-        start_x = max(0, (width - len(line)) // 2)
-        stdscr.addstr(start_y + i, start_x, line, curses.A_BOLD)
+        stdscr.addstr(start_y + i, 2, line, curses.A_BOLD)
     return len(mascot)
 
 def draw_menu(stdscr):
@@ -328,7 +327,7 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw static mascot
+        # 1. Draw static mascot left-aligned
         mascot_height = draw_mascot(stdscr, 1, width)
         
         # Clamp selection if size changed after close
