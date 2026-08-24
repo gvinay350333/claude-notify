@@ -290,38 +290,31 @@ def play_startup_animation(stdscr):
     curses.curs_set(0)
     stdscr.nodelay(True)
     
-    # 3-phase specs pull down animation showing clear eye shapes
+    # 3-phase clean eye opening animation (ignoring glasses)
     frames = [
-        # Frame 1: Specs covering the eyes fully
+        # Frame 1: Eyes Closed
         [
-            "      .-------.     .-------.      ",
-            "     /  _ _ _  \\   /  _ _ _  \\     ",
-            "    |  | (o) |  |===|  | (o) |  |    ",
-            "     \\  \\___/  /     \\  \\___/  /     ",
-            "      '-------'     '-------'      "
+            "                                   ",
+            "      .- - - -.     .- - - -.      ",
+            "                                   ",
+            "                                   ",
+            "                                   "
         ],
-        # Frame 2: Specs sliding down (half eye visible)
+        # Frame 2: Eyes Half Open
         [
             "       .-----.       .-----.       ",
             "      /  _ _  \\     /  _ _  \\      ",
-            "     |  ( o )  |   |  ( o )  |     ",
-            "     | .-----. |   | .-----. |     ",
-            "     |/       \\|===|/       \\|     ",
+            "     | ------- |   | ------- |     ",
             "      \\       /     \\       /      ",
             "       '-----'       '-----'       "
         ],
-        # Frame 3: Specs fully pulled down (eyes open and looking at you)
+        # Frame 3: Eyes Fully Open
         [
             "       .-----.       .-----.       ",
             "      /  _ _  \\     /  _ _  \\      ",
             "     |  ( o )  |   |  ( o )  |     ",
             "      \\   -   /     \\   -   /      ",
-            "       '-----'       '-----'       ",
-            "      .-------.     .-------.      ",
-            "     /         \\   /         \\     ",
-            "    |           |=|           |    ",
-            "     \\         /   \\         /     ",
-            "      '-------'     '-------'      "
+            "       '-----'       '-----'       "
         ]
     ]
     
@@ -345,10 +338,10 @@ def play_startup_animation(stdscr):
         except Exception:
             pass
             
-        time.sleep(0.4)
+        time.sleep(0.35)
         
     stdscr.nodelay(False)
-    time.sleep(0.2)
+    time.sleep(0.15)
 
 def draw_menu(stdscr):
     curses.curs_set(0)
