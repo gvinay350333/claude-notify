@@ -13,6 +13,9 @@ SESSION_ID="${CLAUDE_CODE_SESSION_ID:-}"
 
 SESSION_FILE="$DATA_DIR/$SESSION_ID.json"
 
+# Ensure homebrew is in PATH so jq is found
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 case "$ACTION" in
 start)
 
@@ -44,9 +47,6 @@ case "$FRONTMOST" in
     ;;
 esac
 
-# Ensure homebrew is in PATH so jq is found
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-
 PROMPT_TEXT="${2:-}"
 
 SESSION_TTY=""
@@ -68,7 +68,7 @@ if [ -z "$SESSION_TTY" ] || [ "$SESSION_TTY" = "not a tty" ]; then
   done
 fi
 
-# Construct JSON safely using jq
+# Construct JSON safely using jq with running status
 jq -n \
   --arg id "$SESSION_ID" \
   --arg proj "${CLAUDE_PROJECT_DIR}" \
@@ -76,24 +76,32 @@ jq -n \
   --arg app "$TERM_APP" \
   --arg tty "$SESSION_TTY" \
   --arg prompt "$PROMPT_TEXT" \
-  '{session_id: $id, project: $proj, start_time: ($time | tonumber), terminal_app: $app, tty: $tty, last_prompt: $prompt}' \
+  --arg status "running" \
+  '{session_id: $id, project: $proj, start_time: ($time | tonumber), updated_at: ($time | tonumber), terminal_app: $app, tty: $tty, last_prompt: $prompt, status: $status}' \
   > "$SESSION_FILE"
 ;;
 
+status)
+STATUS_VAL="${2:-ready}"
+if [ -f "$SESSION_FILE" ]; then
+  NOW=$(date +%s)
+  TMP_JSON=$(jq --arg st "$STATUS_VAL" --arg time "$NOW" '.status = $st | .updated_at = ($time | tonumber)' "$SESSION_FILE")
+  echo "$TMP_JSON" > "$SESSION_FILE"
+fi
+;;
+
 read)
-
 [ -f "$SESSION_FILE" ] || exit 0
-
 cat "$SESSION_FILE"
 ;;
 
 stop)
-
-[ -f "$SESSION_FILE" ] || exit 0
-
-cat "$SESSION_FILE"
-
-# Do not delete session file here so it stays active for multiple queries in the same session
+if [ -f "$SESSION_FILE" ]; then
+  NOW=$(date +%s)
+  TMP_JSON=$(jq --arg st "ready" --arg time "$NOW" '.status = $st | .updated_at = ($time | tonumber)' "$SESSION_FILE")
+  echo "$TMP_JSON" > "$SESSION_FILE"
+  cat "$SESSION_FILE"
+fi
 ;;
 
 esac

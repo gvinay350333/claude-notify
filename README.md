@@ -14,6 +14,8 @@ Desktop notifications for Claude Code. Native macOS alerts with quick actions, i
 - **Multiple Session Support:** Works across any number of simultaneous Claude terminal tabs because every session's unique TTY is tracked independently.
 - **Contextual Context:** Shows the project name, branch, status, and duration in the notification banner.
 - **Interactive Session Dashboard (`clist`):** A fullscreen terminal selector (`clist` or `/clist`) to view all active Claude sessions, navigate using arrow keys, and:
+  - **Live Session Status:** Shows real-time session state: ⏳ `RUNNING`, 🟡 `APPROVAL` (waiting for permission input), and 🟢 `READY`.
+  - **Custom Tags/Labels:** Press **`R`** to assign persistent custom tags to any session.
   - **Focus Tab:** Switch instantly to that session's exact terminal window and tab.
   - **Exit Session:** Send `/exit` to close/exits Claude Code directly from the dashboard while keeping the dashboard open.
 - **Zero-Configuration Installation:** Installs hooks automatically in one single command.

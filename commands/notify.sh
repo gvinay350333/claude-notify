@@ -12,6 +12,7 @@ for i in {1..10}; do
 done
 
 SESSION_JSON=$(bash "$SCRIPT_DIR/../lib/session.sh" read)
+bash "$SCRIPT_DIR/../lib/session.sh" status "needs_approval"
 
 STATUS_MSG="${1:-}"
 

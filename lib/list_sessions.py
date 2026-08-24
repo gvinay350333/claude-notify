@@ -301,7 +301,15 @@ def load_active_sessions():
                 else:
                     title = base_title
                     
-                updated_at = data.get("updatedAt") or data.get("startedAt") or 0
+                raw_status = ns.get("status", "ready")
+                if raw_status == "running":
+                    status_text = "⏳ RUNNING"
+                elif raw_status == "needs_approval":
+                    status_text = "🟡 APPROVAL"
+                else:
+                    status_text = "🟢 READY"
+                    
+                updated_at = ns.get("updated_at") or data.get("updatedAt") or data.get("startedAt") or 0
                 
                 sessions.append({
                     "session_id": sid,
@@ -312,6 +320,7 @@ def load_active_sessions():
                     "app": app,
                     "title": title,
                     "custom_tag": custom_tag,
+                    "status_text": status_text,
                     "updated_at": updated_at
                 })
         except Exception:
@@ -406,15 +415,16 @@ def draw_menu(stdscr):
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
         
         # Header configurations
-        col_proj_w = max(12, min(20, width // 5))
+        col_proj_w = max(10, min(16, width // 6))
+        col_status_w = 14
         col_tty_w = 8
         col_age_w = 10
         col_action_w = 14
-        col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
+        col_title_w = max(15, width - col_proj_w - col_status_w - col_tty_w - col_age_w - col_action_w - 10)
         
         # Draw Header row below side-by-side header
         header_y = header_height + 1
-        header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
+        header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'STATUS'.ljust(col_status_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
         stdscr.addstr(header_y, 0, header[:width-1], curses.A_BOLD)
         stdscr.addstr(header_y + 1, 0, ("─" * width)[:width-1])
         
@@ -425,16 +435,17 @@ def draw_menu(stdscr):
         for idx, s in enumerate(sessions[:max_visible]):
             proj_disp = truncate_string(s["project_name"], col_proj_w)
             title_disp = truncate_string(s["title"], col_title_w)
+            status_disp = truncate_string(s["status_text"], col_status_w)
             tty_disp = truncate_string(s["tty"] if s["tty"] else "N/A", col_tty_w)
             age_disp = truncate_string(relative_time(s["updated_at"]), col_age_w)
             
             if idx == selected_idx:
                 action_text = "◀ FOCUS ▶".center(col_action_w) if current_action == 0 else "◀ EXIT ▶".center(col_action_w)
-                line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
+                line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {status_disp.ljust(col_status_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
                 stdscr.addstr(data_start_y + idx, 0, line[:width-1], curses.color_pair(1) | curses.A_BOLD)
             else:
                 action_text = "  Focus".ljust(col_action_w)
-                line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
+                line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {status_disp.ljust(col_status_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
                 stdscr.addstr(data_start_y + idx, 0, line[:width-1])
         
         # Footer
