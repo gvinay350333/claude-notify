@@ -136,7 +136,6 @@ def focus_terminal(app, tty_val):
             f.write(f"Focus Error: {res.stderr}\n")
 
 def close_claude_session(app, tty_val, pid):
-    # 1. Try graceful exit via AppleScript if TTY is available
     if tty_val and tty_val != "/dev/":
         app_name = "iTerm" if app == "iTerm2" else app
         script = ""
@@ -202,8 +201,6 @@ def close_claude_session(app, tty_val, pid):
         """
         subprocess.run(["osascript", "-e", script], capture_output=True)
 
-    # 2. Terminate the process directly using SIGTERM
-    # This guarantees the session exits immediately (even if TTY was N/A or AppleScript was blocked)
     if pid:
         try:
             os.kill(int(pid), 15) # SIGTERM
@@ -289,6 +286,69 @@ def load_active_sessions():
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
 
+def play_startup_animation(stdscr):
+    curses.curs_set(0)
+    stdscr.nodelay(True)
+    
+    # 3-phase specs pull down animation showing half eye then fully visible
+    frames = [
+        # Frame 1: Specs covering the eyes fully
+        [
+            "      .=======.     .=======.      ",
+            "     /  .-.   \\     /  .-.   \\     ",
+            "    |  | O |   |===|  | O |   |    ",
+            "     \\  '-'   /     \\  '-'   /     ",
+            "      '======='     '======='      "
+        ],
+        # Frame 2: Specs sliding down (half eye visible)
+        [
+            "       .---.         .---.         ",
+            "      /  O  \\       /  O  \\        ",
+            "     | .=====.     .=====. |       ",
+            "     ||       |===|       ||       ",
+            "      \\ =====/     \\ =====/        ",
+            "       '---'         '---'         "
+        ],
+        # Frame 3: Specs fully pulled down (eyes open and looking at you)
+        [
+            "       .---.         .---.         ",
+            "      /  O  \\       /  O  \\        ",
+            "     |   |   |     |   |   |       ",
+            "      \\     /       /     \\        ",
+            "       '---'         '---'         ",
+            "      .=======.     .=======.      ",
+            "     /         \\   /         \\     ",
+            "    |           |=|           |    ",
+            "     \\         /   \\         /     ",
+            "      '======='     '======='      "
+        ]
+    ]
+    
+    for frame in frames:
+        stdscr.erase()
+        height, width = stdscr.getmaxyx()
+        
+        # Render frame centered
+        start_y = max(0, (height - len(frame)) // 2 - 1)
+        for i, line in enumerate(frame):
+            start_x = max(0, (width - len(line)) // 2)
+            stdscr.addstr(start_y + i, start_x, line[:width-1], curses.A_BOLD)
+            
+        stdscr.refresh()
+        
+        # Check for keyboard skip
+        try:
+            key = stdscr.getch()
+            if key != -1:
+                break
+        except Exception:
+            pass
+            
+        time.sleep(0.3)
+        
+    stdscr.nodelay(False)
+    time.sleep(0.2)
+
 def draw_menu(stdscr):
     curses.curs_set(0)
     curses.use_default_colors()
@@ -297,6 +357,9 @@ def draw_menu(stdscr):
         curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_CYAN)
     except Exception:
         pass
+        
+    # Play specs pull down animation once at startup
+    play_startup_animation(stdscr)
         
     selected_idx = 0
     current_action = 0
@@ -316,17 +379,14 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # Clamp selection if size changed after close
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
         
-        # Header configurations
         col_proj_w = max(12, min(20, width // 5))
         col_tty_w = 8
         col_age_w = 10
         col_action_w = 14
         col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
         
-        # Draw Header row
         header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
         stdscr.addstr(0, 0, header[:width-1], curses.A_BOLD)
         stdscr.addstr(1, 0, ("─" * width)[:width-1])
@@ -347,7 +407,6 @@ def draw_menu(stdscr):
                 line = f"{proj_disp.ljust(col_proj_w)}  {title_disp.ljust(col_title_w)}  {tty_disp.ljust(col_tty_w)}  {age_disp.ljust(col_age_w)}  {action_text}"
                 stdscr.addstr(2 + idx, 0, line[:width-1])
         
-        # Footer
         footer = "(Navigate: ↑/↓/←/→, Select Action: ←/→, Execute: Enter, Cancel: Ctrl+C)"
         stdscr.addstr(height - 1, 0, footer[:width-1], curses.A_DIM)
         
@@ -355,7 +414,6 @@ def draw_menu(stdscr):
         
         key = stdscr.getch()
         
-        # Handle keypresses
         if key in (curses.KEY_UP, ord('k')):
             selected_idx = (selected_idx - 1) % len(sessions)
             current_action = 0 
@@ -369,14 +427,11 @@ def draw_menu(stdscr):
         elif key in (10, 13, curses.KEY_ENTER):
             selected_session = sessions[selected_idx]
             if current_action == 0:
-                # Return selected session to focus and exit clist
                 return selected_session, 0
             else:
-                # Exit session: send /exit command but STAY inside clist!
                 stdscr.addstr(height - 2, 0, f"Exiting session: {selected_session['project_name']}...".ljust(width-1), curses.A_REVERSE)
                 stdscr.refresh()
                 close_claude_session(selected_session["app"], "/dev/" + selected_session["tty"], selected_session["pid"])
-                # Wait for session file updates and reload
                 time.sleep(0.3)
                 sessions = load_active_sessions()
                 current_action = 0
@@ -384,7 +439,6 @@ def draw_menu(stdscr):
             return None, None
 
 def main():
-    # Use curses wrapper to run TUI
     selected, action = curses.wrapper(draw_menu)
     
     if selected and action == 0:
