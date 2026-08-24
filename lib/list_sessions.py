@@ -286,18 +286,26 @@ def load_active_sessions():
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
 
-def draw_glasses(stdscr, start_y, width):
-    glasses = [
-        "      .─────────.     .─────────.      ",
-        "     / █████████ \\   / █████████ \\     ",
-        "    | ███████████ |─| ███████████ |    ",
-        "     \\ █████████ /   \\ █████████ /     ",
-        "      '─────────'     '─────────'      "
+def draw_meme_face(stdscr, start_y, width):
+    face = [
+        "             _,,--~~--,,_              ",
+        "           /              \\             ",
+        "          /   _ _    _ _   \\            ",
+        "         |   ( O )  ( O )   |           ",
+        "         |    \\ /    \\ /    |           ",
+        "         | .──────.──────.  |           ",
+        "         |/  ████  \\  ████ \\|           ",
+        "         |\\  ████  /  ████ /|           ",
+        "          \\  '────'  '────'/            ",
+        "           \\   .-----.    /             ",
+        "            \\ (_______)  /              ",
+        "             \\          /               ",
+        "              `--------'                "
     ]
-    for i, line in enumerate(glasses):
+    for i, line in enumerate(face):
         start_x = max(0, (width - len(line)) // 2)
         stdscr.addstr(start_y + i, start_x, line[:width-1], curses.A_BOLD)
-    return len(glasses)
+    return len(face)
 
 def draw_menu(stdscr):
     curses.curs_set(0)
@@ -326,8 +334,8 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw fully shaded glasses at the top (no animation)
-        glasses_height = draw_glasses(stdscr, 1, width)
+        # 1. Draw static meme face looking over specs at the top
+        face_height = draw_meme_face(stdscr, 1, width)
         
         # Clamp selection if size changed after close
         selected_idx = max(0, min(selected_idx, len(sessions) - 1))
@@ -339,8 +347,8 @@ def draw_menu(stdscr):
         col_action_w = 14
         col_title_w = max(15, width - col_proj_w - col_tty_w - col_age_w - col_action_w - 8)
         
-        # Draw Header row below glasses
-        header_y = glasses_height + 2
+        # Draw Header row below face
+        header_y = face_height + 2
         header = f"{'PROJECT'.ljust(col_proj_w)}  {'CONVERSATION'.ljust(col_title_w)}  {'TTY'.ljust(col_tty_w)}  {'ACTIVE'.ljust(col_age_w)}  {'ACTION'.ljust(col_action_w)}"
         stdscr.addstr(header_y, 0, header[:width-1], curses.A_BOLD)
         stdscr.addstr(header_y + 1, 0, ("─" * width)[:width-1])
