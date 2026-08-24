@@ -290,31 +290,31 @@ def play_startup_animation(stdscr):
     curses.curs_set(0)
     stdscr.nodelay(True)
     
-    # 3-phase clean eye opening animation (ignoring glasses)
+    # High-fidelity realistic eye opening animation
     frames = [
         # Frame 1: Eyes Closed
         [
-            "                                   ",
-            "      .- - - -.     .- - - -.      ",
-            "                                   ",
-            "                                   ",
-            "                                   "
+            "                                                        ",
+            "                                                        ",
+            "       .-~''\"\"''~-.                  .-~''\"\"''~-.       ",
+            "       '·-.,_ _,,.-·'                '·-.,_ _,,.-·'     ",
+            "                                                        "
         ],
-        # Frame 2: Eyes Half Open
+        # Frame 2: Eyes Half Open (iris/pupil hidden under eyelid)
         [
-            "       .-----.       .-----.       ",
-            "      /  _ _  \\     /  _ _  \\      ",
-            "     | ------- |   | ------- |     ",
-            "      \\       /     \\       /      ",
-            "       '-----'       '-----'       "
+            "        ,.-~''\"\"''~-.,                ,.-~''\"\"''~-.,    ",
+            "       /  .-~''\"\"''~-.  \\            /  .-~''\"\"''~-.  \\   ",
+            "      |  |  (_____)  |  |          |  |  (_____)  |  |  ",
+            "       \\  '-.______.-'  /           \\  '-.______.-'  /  ",
+            "        '~-.,_  _,,.-~'              '~-.,_  _,,.-~'    "
         ],
-        # Frame 3: Eyes Fully Open
+        # Frame 3: Eyes Fully Open (large clear iris and pupil visible)
         [
-            "       .-----.       .-----.       ",
-            "      /  _ _  \\     /  _ _  \\      ",
-            "     |  ( o )  |   |  ( o )  |     ",
-            "      \\   -   /     \\   -   /      ",
-            "       '-----'       '-----'       "
+            "        ,.-~''\"\"''~-.,                ,.-~''\"\"''~-.,    ",
+            "       /  .-~''\"\"''~-.  \\            /  .-~''\"\"''~-.  \\   ",
+            "      |  |    ( @ )    |  |          |  |    ( @ )    |  |  ",
+            "       \\  '-.______.-'  /           \\  '-.______.-'  /  ",
+            "        '~-.,_  _,,.-~'              '~-.,_  _,,.-~'    "
         ]
     ]
     
