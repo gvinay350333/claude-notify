@@ -7,6 +7,31 @@ import subprocess
 import time
 import curses
 
+TAGS_FILE = os.path.expanduser("~/.claude-notify/data/tags.json")
+
+def load_tags():
+    if os.path.exists(TAGS_FILE):
+        try:
+            with open(TAGS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+def save_tag(session_id, tag):
+    tags = load_tags()
+    if tag:
+        tags[session_id] = tag.strip()
+    else:
+        tags.pop(session_id, None)
+    os.makedirs(os.path.dirname(TAGS_FILE), exist_ok=True)
+    try:
+        with open(TAGS_FILE, "w", encoding="utf-8") as f:
+            json.dump(tags, f, indent=2)
+    except Exception as e:
+        with open("/tmp/clist_error.log", "a") as f:
+            f.write(f"Save Tag Error: {e}\n")
+
 def is_pid_running(pid):
     if not pid:
         return False
@@ -214,6 +239,8 @@ def truncate_string(s, length):
     return s[:length-3] + "..."
 
 def load_active_sessions():
+    tags = load_tags()
+
     # Load History for Titles
     history = {}
     history_file = os.path.expanduser("~/.claude/history.jsonl")
@@ -267,7 +294,13 @@ def load_active_sessions():
                 tty_val = ns.get("tty", "")
                 app = ns.get("terminal_app", "")
                 
-                title = history.get(sid) or ns.get("last_prompt") or ""
+                base_title = history.get(sid) or ns.get("last_prompt") or "(new conversation)"
+                custom_tag = tags.get(sid, "")
+                if custom_tag:
+                    title = f"🏷️ [{custom_tag}] {base_title}"
+                else:
+                    title = base_title
+                    
                 updated_at = data.get("updatedAt") or data.get("startedAt") or 0
                 
                 sessions.append({
@@ -278,6 +311,7 @@ def load_active_sessions():
                     "tty": tty_val.replace("/dev/", ""),
                     "app": app,
                     "title": title,
+                    "custom_tag": custom_tag,
                     "updated_at": updated_at
                 })
         except Exception:
@@ -285,6 +319,38 @@ def load_active_sessions():
 
     sessions.sort(key=lambda s: s["updated_at"], reverse=True)
     return sessions
+
+def prompt_tag_input(stdscr, current_tag):
+    height, width = stdscr.getmaxyx()
+    prompt_prefix = "🏷️ Enter Custom Tag/Name (Esc to cancel, Empty to clear): "
+    
+    curses.noecho()
+    curses.curs_set(1)
+    
+    input_str = current_tag or ""
+    stdscr.addstr(height - 2, 0, " " * (width - 1))
+    stdscr.addstr(height - 2, 0, f"{prompt_prefix}{input_str}"[:width-1], curses.A_REVERSE)
+    stdscr.refresh()
+    
+    while True:
+        ch = stdscr.getch()
+        if ch in (10, 13, curses.KEY_ENTER):
+            curses.curs_set(0)
+            return input_str.strip()
+        elif ch in (27, 3): # ESC or Ctrl+C
+            curses.curs_set(0)
+            return None
+        elif ch in (curses.KEY_BACKSPACE, 127, 8):
+            if input_str:
+                input_str = input_str[:-1]
+                stdscr.addstr(height - 2, 0, " " * (width - 1))
+                stdscr.addstr(height - 2, 0, f"{prompt_prefix}{input_str}"[:width-1], curses.A_REVERSE)
+                stdscr.refresh()
+        elif 32 <= ch <= 126:
+            input_str += chr(ch)
+            stdscr.addstr(height - 2, 0, " " * (width - 1))
+            stdscr.addstr(height - 2, 0, f"{prompt_prefix}{input_str}"[:width-1], curses.A_REVERSE)
+            stdscr.refresh()
 
 def draw_side_header(stdscr, active_count, width):
     # Left side: Mascot
@@ -302,7 +368,7 @@ def draw_side_header(stdscr, active_count, width):
     if width > title_x + 30:
         stdscr.addstr(1, title_x, "🤖 CLAUDE CODE CONVERSATIONS", curses.A_BOLD)
         stdscr.addstr(2, title_x, "────────────────────────────", curses.A_DIM)
-        stdscr.addstr(3, title_x, f"Active Sessions: {active_count}  •  Select action: ◀ FOCUS ▶ / ◀ EXIT ▶", curses.A_DIM)
+        stdscr.addstr(3, title_x, f"Active Sessions: {active_count}  •  [R] Rename  •  ◀ FOCUS ▶ / ◀ EXIT ▶", curses.A_DIM)
         
     return len(mascot) + 1
 
@@ -333,7 +399,7 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw side-by-side header (Left: Mascot, Right: Title/Stats)
+        # 1. Draw side-by-side header
         header_height = draw_side_header(stdscr, len(sessions), width)
         
         # Clamp selection if size changed after close
@@ -358,7 +424,7 @@ def draw_menu(stdscr):
         
         for idx, s in enumerate(sessions[:max_visible]):
             proj_disp = truncate_string(s["project_name"], col_proj_w)
-            title_disp = truncate_string(s["title"] if s["title"] else "(new conversation)", col_title_w)
+            title_disp = truncate_string(s["title"], col_title_w)
             tty_disp = truncate_string(s["tty"] if s["tty"] else "N/A", col_tty_w)
             age_disp = truncate_string(relative_time(s["updated_at"]), col_age_w)
             
@@ -372,7 +438,7 @@ def draw_menu(stdscr):
                 stdscr.addstr(data_start_y + idx, 0, line[:width-1])
         
         # Footer
-        footer = "(Navigate: ↑/↓/←/→, Select Action: ←/→, Execute: Enter, Cancel: Ctrl+C)"
+        footer = "(Navigate: ↑/↓/←/→, Action: ←/→, Rename: R, Execute: Enter, Cancel: Ctrl+C)"
         stdscr.addstr(height - 1, 0, footer[:width-1], curses.A_DIM)
         
         stdscr.refresh()
@@ -390,6 +456,12 @@ def draw_menu(stdscr):
             current_action = 0
         elif key in (curses.KEY_RIGHT, ord('l')):
             current_action = 1
+        elif key in (ord('r'), ord('R')):
+            selected_session = sessions[selected_idx]
+            new_tag = prompt_tag_input(stdscr, selected_session.get("custom_tag"))
+            if new_tag is not None:
+                save_tag(selected_session["session_id"], new_tag)
+                sessions = load_active_sessions()
         elif key in (10, 13, curses.KEY_ENTER):
             selected_session = sessions[selected_idx]
             if current_action == 0:
