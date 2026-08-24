@@ -290,37 +290,38 @@ def play_startup_animation(stdscr):
     curses.curs_set(0)
     stdscr.nodelay(True)
     
-    # 3-phase specs pull down animation showing half eye then fully visible
+    # 3-phase specs pull down animation showing clear eye shapes
     frames = [
         # Frame 1: Specs covering the eyes fully
         [
-            "      .=======.     .=======.      ",
-            "     /  .-.   \\     /  .-.   \\     ",
-            "    |  | O |   |===|  | O |   |    ",
-            "     \\  '-'   /     \\  '-'   /     ",
-            "      '======='     '======='      "
+            "      .-------.     .-------.      ",
+            "     /  _ _ _  \\   /  _ _ _  \\     ",
+            "    |  | (o) |  |===|  | (o) |  |    ",
+            "     \\  \\___/  /     \\  \\___/  /     ",
+            "      '-------'     '-------'      "
         ],
         # Frame 2: Specs sliding down (half eye visible)
         [
-            "       .---.         .---.         ",
-            "      /  O  \\       /  O  \\        ",
-            "     | .=====.     .=====. |       ",
-            "     ||       |===|       ||       ",
-            "      \\ =====/     \\ =====/        ",
-            "       '---'         '---'         "
+            "       .-----.       .-----.       ",
+            "      /  _ _  \\     /  _ _  \\      ",
+            "     |  ( o )  |   |  ( o )  |     ",
+            "     | .-----. |   | .-----. |     ",
+            "     |/       \\|===|/       \\|     ",
+            "      \\       /     \\       /      ",
+            "       '-----'       '-----'       "
         ],
         # Frame 3: Specs fully pulled down (eyes open and looking at you)
         [
-            "       .---.         .---.         ",
-            "      /  O  \\       /  O  \\        ",
-            "     |   |   |     |   |   |       ",
-            "      \\     /       /     \\        ",
-            "       '---'         '---'         ",
-            "      .=======.     .=======.      ",
+            "       .-----.       .-----.       ",
+            "      /  _ _  \\     /  _ _  \\      ",
+            "     |  ( o )  |   |  ( o )  |     ",
+            "      \\   -   /     \\   -   /      ",
+            "       '-----'       '-----'       ",
+            "      .-------.     .-------.      ",
             "     /         \\   /         \\     ",
             "    |           |=|           |    ",
             "     \\         /   \\         /     ",
-            "      '======='     '======='      "
+            "      '-------'     '-------'      "
         ]
     ]
     
@@ -344,7 +345,7 @@ def play_startup_animation(stdscr):
         except Exception:
             pass
             
-        time.sleep(0.3)
+        time.sleep(0.4)
         
     stdscr.nodelay(False)
     time.sleep(0.2)
