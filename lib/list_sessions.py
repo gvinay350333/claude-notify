@@ -287,13 +287,14 @@ def load_active_sessions():
     return sessions
 
 def draw_mascot(stdscr, start_y, width):
-    # Centered retro 8-bit Claude Code robot mascot logo
+    # Standard character retro mascot (immune to terminal font line-height issues)
     mascot = [
-        " ▄     ▄ ",
-        "█████████",
-        "██ █ █ ██",
-        "█████████",
-        " █     █ "
+        "   |/|   |\\|   ",
+        "  .---------.  ",
+        "  |  O   O  |  ",
+        "  |    -    |  ",
+        "  '---------'  ",
+        "   /       \\   "
     ]
     for i, line in enumerate(mascot):
         start_x = max(0, (width - len(line)) // 2)
@@ -327,7 +328,7 @@ def draw_menu(stdscr):
         stdscr.erase()
         height, width = stdscr.getmaxyx()
         
-        # 1. Draw static 8-bit Claude Code mascot at the top
+        # 1. Draw static mascot
         mascot_height = draw_mascot(stdscr, 1, width)
         
         # Clamp selection if size changed after close
